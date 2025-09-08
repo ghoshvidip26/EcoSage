@@ -6,6 +6,8 @@ import pandas as pd
 
 # Load dataset
 df = pd.read_csv("dataset.csv")
+print(df.columns)
+print(df.head())
 
 # Embedding model
 embeddings = OllamaEmbeddings(model="mxbai-embed-large")
@@ -18,8 +20,11 @@ if add_documents:
     documents = []
     ids = []
     for i, row in df.iterrows():
+        # Use the actual column names from the CSV
+        title = row.get("Title", "") if "Title" in df.columns else row.get(df.columns[0], "")
+        review = row.get("Review", "") if "Review" in df.columns else row.get(df.columns[1], "")
         document = Document(
-            page_content=row["Title"] + " " + row["Review"],
+            page_content=str(title) + " " + str(review),
             metadata={
                 "country": row.get("country", ""),
                 "sector": row.get("sector", ""),

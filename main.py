@@ -1,8 +1,18 @@
-from langchain_ollama.llms import OllamaLLM
+from langchain_ollama import ChatOllama 
+from langchain_core.output_parsers import PydanticOutputParser
+from pydantic import BaseModel,Field
 from langchain_core.prompts import ChatPromptTemplate
 from vector import retriever, vector_store
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+from tools import TOOLS
 
-model = OllamaLLM(model="llama3.2")
+class EcoAdvice(BaseModel):
+    topic: str = Field(..., description="Main sustainability topic")
+    summary: str = Field(..., description="Concise eco-friendly advice")
+    actions: list[str] = Field(..., description="List of actionable steps")
+    sources: list[str] = Field(..., description="References or sources if available")
+
+model = ChatOllama(model="llama3.2")
 
 def format_reviews(docs):
     formatted = []
@@ -32,25 +42,20 @@ def build_filter(question: str):
         return {"$and": filters}
     return None
 
-template = """
-You are an expert on reducing carbon footprint.
+template = """ You are an expert on reducing carbon footprint. Here are some relevant reviews with context: {reviews} The reviews may include: - Country - Date - Sector (like transport, energy, food) - Value (numerical score/impact) The user has a question: {question} Thought:{agent_scratchpad} Use the reviews and their metadata to provide personalized, actionable eco-friendly advice. """
 
-Here are some relevant reviews with context:
-{reviews}
+parser = PydanticOutputParser(pydantic_object=EcoAdvice)
+prompt = ChatPromptTemplate.from_template(template).partial(
+    format_instructions=parser.get_format_instructions()
+)
 
-The reviews may include:
-- Country
-- Date
-- Sector (like transport, energy, food)
-- Value (numerical score/impact)
+agent = create_tool_calling_agent(
+    llm=model,
+    prompt=prompt,
+    tools=TOOLS
+)
 
-The user has a question:
-{question}
-
-Use the reviews and their metadata to provide personalized, actionable eco-friendly advice.
-"""
-prompt = ChatPromptTemplate.from_template(template)
-chain = prompt | model
+agent_executor = AgentExecutor(agent=agent, tools=TOOLS, verbose=True,max_iterations=2)
 
 while True:
     print("\n\n--------------------")
@@ -65,7 +70,7 @@ while True:
         k=5,
         filter=query_filter
     )
-
     reviews = format_reviews(docs)
-    result = chain.invoke({"reviews": reviews, "question": question})
-    print(result)
+    result = agent_executor.invoke({"reviews": reviews, "question": question})
+    structured = parser.parse(result["output"])
+    print(structured)
