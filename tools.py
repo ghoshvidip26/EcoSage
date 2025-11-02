@@ -13,7 +13,7 @@ search_tool = Tool(
     description="Search the web for information",
 )
 
-wiki_api = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=100)
+wiki_api = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=500)
 def wiki_func(query: str) -> str:
     return wiki_api.run(query)   # ✅ safe callable
 

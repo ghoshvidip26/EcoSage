@@ -42,12 +42,27 @@ def build_filter(question: str):
         return {"$and": filters}
     return None
 
-template = """ You are an expert on reducing carbon footprint. Here are some relevant reviews with context: {reviews} The reviews may include: - Country - Date - Sector (like transport, energy, food) - Value (numerical score/impact) The user has a question: {question} Thought:{agent_scratchpad} Use the reviews and their metadata to provide personalized, actionable eco-friendly advice. """
+template = template = """
+You are an expert on reducing carbon footprint.
+
+Here are some relevant reviews with context:
+{reviews}
+
+The reviews may include:
+- Country
+- Date
+- Sector (like transport, energy, food)
+- Value (numerical score/impact)
+
+The user has a question:
+{question}
+
+Use the reviews and their metadata to provide personalized, actionable eco-friendly advice.
+{agent_scratchpad}
+"""
 
 parser = PydanticOutputParser(pydantic_object=EcoAdvice)
-prompt = ChatPromptTemplate.from_template(template).partial(
-    format_instructions=parser.get_format_instructions()
-)
+prompt = ChatPromptTemplate.from_template(template)
 
 agent = create_tool_calling_agent(
     llm=model,
@@ -55,7 +70,7 @@ agent = create_tool_calling_agent(
     tools=TOOLS
 )
 
-agent_executor = AgentExecutor(agent=agent, tools=TOOLS, verbose=True,max_iterations=2)
+agent_executor = AgentExecutor(agent=agent, tools=TOOLS, verbose=True)
 
 while True:
     print("\n\n--------------------")
@@ -72,5 +87,4 @@ while True:
     )
     reviews = format_reviews(docs)
     result = agent_executor.invoke({"reviews": reviews, "question": question})
-    structured = parser.parse(result["output"])
-    print(structured)
+    print("Result: ", result)
