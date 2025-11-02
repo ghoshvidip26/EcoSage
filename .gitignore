@@ -1,2 +1,3 @@
-/PlantDisease*.h5
+/PlantDisease*
 /recommend.pkl
+/PlantDiseaseModel.keras
