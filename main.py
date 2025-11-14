@@ -42,7 +42,7 @@ def build_filter(question: str):
         return {"$and": filters}
     return None
 
-template = template = """
+template = """
 You are an expert on reducing carbon footprint.
 
 Here are some relevant reviews with context:

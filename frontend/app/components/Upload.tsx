@@ -21,16 +21,19 @@ export default function Upload({ onImageUpload, onReset }: UploadProps) {
       const form = new FormData();
       form.set("file", stagedFile);
 
-      const uploadRes = await fetch("/api/upload", {
+      const uploadRes = await fetch("http://127.0.0.1:3001/agent", {
         method: "POST",
         body: form,
       });
+
+      console.log("Upload res: ", uploadRes);
 
       if (!uploadRes.ok) {
         throw new Error("Upload failed");
       }
 
       const data = await uploadRes.json();
+      console.log("Data: ", data);
       const imgURL = data.imgUrl;
       setImgUrl(imgURL);
       onImageUpload?.(imgURL);

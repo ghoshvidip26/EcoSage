@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Brain, Leaf, Sprout } from "lucide-react";
 import SendButton from "./components/SendButton";
 import Upload from "./components/Upload";
+import { handleResponse } from "./utils/utils";
 
 const agents = [
   {
@@ -31,25 +32,46 @@ const agents = [
 
 export default function MultiAgentPage() {
   const [selected, setSelected] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
-    []
-  );
+  interface Message {
+    sender: string;
+    text: string;
+    id?: string;
+  }
+  
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { sender: "user", text: input }]);
+    
+    const userMessage = input;
+    setMessages(prev => [...prev, { sender: "user", text: userMessage }]);
     setInput("");
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "agent",
-          text: `🤖 ${selected} agent response to: "${input}"`,
-        },
-      ]);
-    }, 800);
+    
+    try {
+      // Add a temporary loading message
+      const loadingId = Date.now().toString();
+      setMessages(prev => [...prev, { sender: "bot", text: "Thinking...", id: loadingId }]);
+      
+      // Get the response from the API
+      const response = await handleResponse(userMessage, "");
+      
+      // Update the loading message with the actual response
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === loadingId 
+            ? { ...msg, text: response, id: undefined } 
+            : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error in handleSend:", error);
+      setMessages(prev => [...prev, { 
+        sender: "bot", 
+        text: "Sorry, I encountered an error. Please try again." 
+      }]);
+    }
   };
 
   return (
@@ -60,7 +82,7 @@ export default function MultiAgentPage() {
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-5xl font-extrabold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500"
+            className="text-5xl font-extrabold mb-12 text-transparent bg-clip-text bg-linear-to-r from-indigo-400 to-pink-500"
           >
             Choose Your AI Agent
           </motion.h1>
@@ -72,7 +94,7 @@ export default function MultiAgentPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelected(agent.id)}
-                className={`cursor-pointer bg-gradient-to-br ${agent.color} p-1 rounded-2xl shadow-xl`}
+                className={`cursor-pointer bg-linear-to-br ${agent.color} p-1 rounded-2xl shadow-xl`}
               >
                 <div className="bg-[#1e1f25] rounded-2xl h-full p-8 flex flex-col items-center text-center">
                   <div className="mb-4">{agent.icon}</div>
@@ -121,14 +143,17 @@ export default function MultiAgentPage() {
                   }`}
                 >
                   <div
-                    className={`px-4 py-2 rounded-xl max-w-[75%] text-sm ${
+                    className={`px-4 py-2 rounded-xl max-w-[75%] text-sm whitespace-pre-line ${
                       msg.sender === "user"
                         ? "bg-indigo-600 text-white"
                         : "bg-gray-700 text-gray-100"
                     }`}
-                  >
-                    {msg.text}
-                  </div>
+                    dangerouslySetInnerHTML={{
+                      __html: msg.text
+                        .replace(/\n/g, '<br />')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    }}
+                  />
                 </div>
               ))
             )}

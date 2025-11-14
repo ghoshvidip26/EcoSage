@@ -37,7 +37,7 @@ const UserMessage = ({ message, onEdit, onSaveEdit }: UserMessageProps) => {
       <motion.div
         initial={{ scale: 0.98 }}
         animate={{ scale: 1 }}
-        className="relative bg-gradient-to-r from-indigo-500/60 to-blue-500/40 backdrop-blur-md border border-white/10 p-4 rounded-2xl text-white shadow-md max-w-[75%] transition-all duration-300 hover:shadow-lg hover:from-indigo-500/70"
+        className="relative bg-linear-to-r from-indigo-500/60 to-blue-500/40 backdrop-blur-md border border-white/10 p-4 rounded-2xl text-white shadow-md max-w-[75%] transition-all duration-300 hover:shadow-lg hover:from-indigo-500/70"
       >
         {message.imageUrl && (
           <div className="mb-3">
@@ -101,7 +101,7 @@ const UserMessage = ({ message, onEdit, onSaveEdit }: UserMessageProps) => {
       </motion.div>
 
       {/* User Icon */}
-      <div className="flex justify-center items-center w-10 h-10 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-full shadow-lg">
+      <div className="flex justify-center items-center w-10 h-10 bg-linear-to-br from-indigo-600 to-blue-600 rounded-full shadow-lg">
         <CiUser size={22} className="text-white" />
       </div>
     </motion.div>
